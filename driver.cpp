@@ -21,40 +21,64 @@ void read(int files, int record);
 
 struct thread_data {
    int id;
-   int  rec;
-   long long fileSize;
+   long long int rec;
+   long long int fileSize;
 };
 
 
 void *WriteHelper(void *threadarg) {
     struct thread_data *my_data;
-    my_data = (struct thread_data *) threadarg;    
+    my_data = (struct thread_data *) threadarg;
     cout << "id : " << my_data->id;
     cout << "Record : " << my_data->rec ;
     cout << "fileSize : "<< my_data->fileSize;
-    char c = 'a';
+   
     int threadid = my_data->id;
-    int size = my_data->fileSize;
-    int recordSize = my_data->rec;
-    string s = "";
-    ofstream outfile;
-    outfile.rdbuf() -> pubsetbuf(0,0);
-    outfile.open(to_string(threadid));
-    for(int i = 0; i < recordSize-1 ; i++){
-        s += c;
-    }
-    int hops=size/recordSize;
-    auto start = high_resolution_clock::now();
-    for(int i = 0; i < hops ;i++){
-        outfile << s << endl;
-    }
-    auto stop = high_resolution_clock::now();
-    outfile.close();
+    long long int size = my_data->fileSize;
+    long long int recordSize = my_data->rec;
+    
+    stringstream temp_str;
+    temp_str<<(threadid);
+    string str = temp_str.str();
+    const char* cstr2 = str.c_str();
+  
+    char *buf1 = (char *)malloc(recordSize*sizeof(char));
+    void *buffer;
 
+    long long int i =0;
+
+    for(i =0;i<recordSize;i++){
+
+            buf1[i] = 'a';
+    }
+
+    buf1[i] = '\0';
+
+    posix_memalign(&buffer,recordSize,recordSize);
+
+    memcpy(buffer, buf1,recordSize*sizeof(char));
+
+    long long int hops=size/recordSize; //10GB/1M for 1 thread
+
+    int fileDescriptor = open(cstr2, O_CREAT|O_TRUNC|O_DIRECT|O_WRONLY, S_IRWXU);
+    
+    auto start = high_resolution_clock::now();
+
+    for(int i = 0; i < hops ;i++){
+       write(fileDescriptor, buffer, recordSize);
+    }
+
+    auto stop = high_resolution_clock::now();
+    
+    close(fileDescriptor);
+    free(buffer);
+    free(buf1);
+    
     auto duration = duration_cast<microseconds>(stop - start);
 
     cout << "--Time taken by function: "
          << duration.count() << " microseconds" << endl;
+
     pthread_exit(NULL);
 }
 
@@ -148,8 +172,8 @@ int main(int argc, char *argv[])
 
 void write(int files, int record) 
 {   
-   //put this value below prior too submission : 10000000000	
-   long long tenGb = 1000000000;   
+   //put this value below prior too submission : 104857000000	
+   long long tenGb = 1024*1024*1024;   
    long long fileSize = tenGb/files;   
     
    pthread_t threads[files];
