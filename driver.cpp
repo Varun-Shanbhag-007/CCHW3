@@ -82,74 +82,45 @@ void *WriteHelper(void *threadarg) {
     pthread_exit(NULL);
 }
 
-void *ReadHelper_Old(void *threadarg) {
-    struct thread_data *my_data;
-    my_data = (struct thread_data *) threadarg;
-    cout << "id : " << my_data->id;
-    cout << "Record : " << my_data->rec ;
-    int threadid = my_data->id;
-    int size = my_data->fileSize;
-    int BUF_SIZE = my_data->rec;
-
-    char buffer[BUF_SIZE];
-
-    stringstream temp_str;
-    temp_str<<(threadid);
-    string str = temp_str.str();
-    const char* cstr2 = str.c_str();
-    
-    int input_fd = open (cstr2, O_RDONLY);
-
-    if (input_fd == -1) {
-            perror ("open");
-    }
-    ssize_t ret_in;
-    auto start = high_resolution_clock::now();
-    while((ret_in = read (input_fd, &buffer, BUF_SIZE)) > 0){
-    cout<<"In While";
-    }
-    auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(stop - start);
-    cout << "--Time taken by function: "
-         << duration.count() << " microseconds" << endl;
-    close (input_fd);
-    pthread_exit(NULL);
-
-}
-
 void *ReadHelper(void *threadarg) {
-    struct thread_data *my_data;
+  struct thread_data *my_data;
     my_data = (struct thread_data *) threadarg;
     cout << "id : " << my_data->id;
     cout << "Record : " << my_data->rec ;
-    int threadid = my_data->id;
-    int size = my_data->fileSize;
-    int BUF_SIZE = my_data->rec;
+    cout << "fileSize : "<< my_data->fileSize;
 
-    char buffer[BUF_SIZE];
+    int threadid = my_data->id;
+    long long int size = my_data->fileSize;
+    long long int recordSize = my_data->rec;
 
     stringstream temp_str;
     temp_str<<(threadid);
     string str = temp_str.str();
     const char* cstr2 = str.c_str();
-    fstream newfile;
-    newfile.rdbuf()->pubsetbuf(0,0);
-    newfile.open (cstr2, ios::in);
+
+    void *buffer;
+
+    posix_memalign(&buffer,recordSize,recordSize);
+
+    long long int hops=size/recordSize; //10GB/1M for 1 thread
+
+    int fileDescriptor = open(cstr2,O_DIRECT|O_RDONLY, S_IRWXU);
+
     auto start = high_resolution_clock::now();
-    if(newfile.is_open()){
-        string line;
-        while(getline(newfile,line)){
-        //donothing
-        //cout<< line;
-        }
-        newfile.close();
+
+    for(int i = 0; i < hops ;i++){
+       read(fileDescriptor, buffer, recordSize);
     }
+
     auto stop = high_resolution_clock::now();
+
+    close(fileDescriptor);
+    free(buffer);
+    
     auto duration = duration_cast<microseconds>(stop - start);
+
     cout << "--Time taken by function: "
          << duration.count() << " microseconds" << endl;
-    pthread_exit(NULL);
-
 }
 
 
@@ -172,7 +143,7 @@ int main(int argc, char *argv[])
 
 void write(int files, int record) 
 {   
-   //put this value below prior too submission : 104857000000	
+   //put this value below prior too submission : 10485760000	
    long long tenGb = 1024*1024*1024;   
    long long fileSize = tenGb/files;   
     
