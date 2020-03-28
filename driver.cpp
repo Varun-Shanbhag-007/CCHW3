@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 void write(int files, int record) 
 {   
    //put this value below prior too submission : 10485760000	
-   long long tenGb = 1024*1024*1024;   
+   long long tenGb = 10485760000;   
    long long fileSize = tenGb/files;   
     
    pthread_t threads[files];
@@ -167,9 +167,9 @@ void write(int files, int record)
 
 void read(int files, int record)
 {
-   //put this value below prior too submission : 10000000000    
-   long long tenGb = 100000;
-   long long fileSize = tenGb/files;
+   //put this value below prior too submission : 10485760000    
+   long long int tenGb = 10485760000;
+   long long int fileSize = tenGb/files;
 
    pthread_t threads[files];
 
