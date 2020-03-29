@@ -19,6 +19,11 @@ void write(int files, int record);
 
 void read(int files, int record);
 
+void write_random(int files, int record);
+
+void read_random(int files, int record);
+
+
 struct thread_data {
    int id;
    long long int rec;
@@ -82,6 +87,67 @@ void *WriteHelper(void *threadarg) {
     pthread_exit(NULL);
 }
 
+void *WriteRandomHelper(void *threadarg) {
+    struct thread_data *my_data;
+    my_data = (struct thread_data *) threadarg;
+    cout << "id : " << my_data->id;
+    cout << "Record : " << my_data->rec ;
+    cout << "fileSize : "<< my_data->fileSize;
+   
+    long long int rand_num = 0;
+    int threadid = my_data->id;
+    long long int size = my_data->fileSize;
+    long long int recordSize = my_data->rec;
+    
+    stringstream temp_str;
+    temp_str<<(threadid);
+    string str = temp_str.str();
+    const char* cstr2 = str.c_str();
+  
+    char *buf1 = (char *)malloc(recordSize*sizeof(char));
+    void *buffer;
+
+    long long int i =0;
+
+    for(i =0;i<recordSize;i++){
+
+            buf1[i] = 'a';
+    }
+
+    buf1[i] = '\0';
+
+    posix_memalign(&buffer,recordSize,recordSize);
+
+    memcpy(buffer, buf1,recordSize*sizeof(char));
+
+    long long int hops=size/recordSize; //10GB/1M for 1 thread
+
+    int fileDescriptor = open(cstr2, O_CREAT|O_TRUNC|O_DIRECT|O_WRONLY, S_IRWXU);
+    
+    auto start = high_resolution_clock::now();
+
+    for(int i = 0; i < hops ;i++){
+      
+      rand_num = (rand()%(size));
+      lseek(fileDescriptor, rand_num, SEEK_SET);
+      write(fileDescriptor, buffer, recordSize);
+    }
+
+    auto stop = high_resolution_clock::now();
+    
+    close(fileDescriptor);
+    free(buffer);
+    free(buf1);
+    
+    auto duration = duration_cast<microseconds>(stop - start);
+
+    cout << "--Time taken by function: "
+         << duration.count() << " microseconds" << endl;
+
+    pthread_exit(NULL);
+}
+
+
 void *ReadHelper(void *threadarg) {
   struct thread_data *my_data;
     my_data = (struct thread_data *) threadarg;
@@ -124,6 +190,55 @@ void *ReadHelper(void *threadarg) {
 }
 
 
+void *ReadRandomHelper(void *threadarg) {
+  struct thread_data *my_data;
+    my_data = (struct thread_data *) threadarg;
+    cout << "id : " << my_data->id;
+    cout << "Record : " << my_data->rec ;
+    cout << "fileSize : "<< my_data->fileSize;
+
+    long long int rand_num = 0; 
+    int threadid = my_data->id;
+    long long int size = my_data->fileSize;
+    long long int recordSize = my_data->rec;
+
+    stringstream temp_str;
+    temp_str<<(threadid);
+    string str = temp_str.str();
+    const char* cstr2 = str.c_str();
+
+    void *buffer;
+
+    posix_memalign(&buffer,recordSize,recordSize);
+
+    long long int hops=size/recordSize; //10GB/1M for 1 thread
+
+    int fileDescriptor = open(cstr2,O_DIRECT|O_RDONLY, S_IRWXU);
+
+    auto start = high_resolution_clock::now();
+
+ 
+
+    for(int i = 0; i < hops ;i++){
+      rand_num = rand()%(size);
+      lseek(fileDescriptor, rand_num, recordSize);
+      read(fileDescriptor, buffer, recordSize);
+    }
+
+    auto stop = high_resolution_clock::now();
+
+    close(fileDescriptor);
+    free(buffer);
+    
+    auto duration = duration_cast<microseconds>(stop - start);
+
+    cout << "--Time taken by function: "
+         << duration.count() << " microseconds" << endl;
+}
+
+
+
+
 int main(int argc, char *argv[])
 {
     char *accessPattern = argv[1];
@@ -137,6 +252,16 @@ int main(int argc, char *argv[])
         cout<<"Read Method Call"<<"\n";
         read(atoi(argv[2]),atoi(argv[3]));
     }
+   else if (strcmp(accessPattern, "WR") == 0)
+    {
+        cout<<"Write Random Method Call"<<"\n";
+        write_random(atoi(argv[2]),atoi(argv[3]));
+    }
+   else if (strcmp(accessPattern, "RR") == 0)
+    {
+        cout<<"Read Random Method Call"<<"\n";
+        read_random(atoi(argv[2]),atoi(argv[3]));
+    }
 
      return(0);
 }
@@ -144,7 +269,7 @@ int main(int argc, char *argv[])
 void write(int files, int record) 
 {   
    //put this value below prior too submission : 10485760000	
-   long long tenGb = 10485760000;   
+   long long tenGb = 1048576000;   
    long long fileSize = tenGb/files;   
     
    pthread_t threads[files];
@@ -165,10 +290,34 @@ void write(int files, int record)
    pthread_exit(NULL);
 }
 
+void write_random(int files, int record) 
+{   
+   //put this value below prior too submission : 10485760000	
+   long long tenGb = 1048576000;   
+   long long fileSize = tenGb/files;   
+    
+   pthread_t threads[files];
+    
+   struct thread_data td[files];
+   int rc;
+   int i;   
+   for( i = 0; i < files; i++ ) {
+      td[i].id = i;
+      td[i].rec = record;
+      td[i].fileSize = fileSize;
+      rc = pthread_create(&threads[i], NULL, WriteRandomHelper, (void *)&td[i]);      
+      if (rc) {
+         cout << "Error:unable to create thread," << rc << endl;
+         exit(-1);
+      }
+   }
+   pthread_exit(NULL);
+}
+
 void read(int files, int record)
 {
    //put this value below prior too submission : 10485760000    
-   long long int tenGb = 10485760000;
+   long long int tenGb = 1048576000;
    long long int fileSize = tenGb/files;
 
    pthread_t threads[files];
@@ -188,6 +337,31 @@ void read(int files, int record)
    }
    pthread_exit(NULL);
 }
+
+void read_random(int files, int record)
+{
+   //put this value below prior too submission : 10485760000    
+   long long int tenGb = 1048576000;
+   long long int fileSize = tenGb/files;
+
+   pthread_t threads[files];
+
+   struct thread_data td[files];
+   int rc;
+   int i;
+   for( i = 0; i < files; i++ ) {
+      td[i].id = i;
+      td[i].rec = record;
+      td[i].fileSize = fileSize;
+      rc = pthread_create(&threads[i], NULL, ReadRandomHelper, (void *)&td[i]);
+      if (rc) {
+         cout << "Error:unable to create thread," << rc << endl;
+         exit(-1);
+      }
+   }
+   pthread_exit(NULL);
+}
+
 
 
 
