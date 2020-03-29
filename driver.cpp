@@ -23,6 +23,8 @@ void write_random(int files, int record);
 
 void read_random(int files, int record);
 
+int w_counter = 0;
+int r_counter = 0;
 
 struct thread_data {
    int id;
@@ -34,9 +36,9 @@ struct thread_data {
 void *WriteHelper(void *threadarg) {
     struct thread_data *my_data;
     my_data = (struct thread_data *) threadarg;
-    cout << "id : " << my_data->id;
-    cout << "Record : " << my_data->rec ;
-    cout << "fileSize : "<< my_data->fileSize;
+    //cout << "id : " << my_data->id;
+    //cout << "Record : " << my_data->rec ;
+    //cout << "fileSize : "<< my_data->fileSize;
    
     int threadid = my_data->id;
     long long int size = my_data->fileSize;
@@ -81,8 +83,10 @@ void *WriteHelper(void *threadarg) {
     
     auto duration = duration_cast<microseconds>(stop - start);
 
-    cout << "--Time taken by function: "
-         << duration.count() << " microseconds" << endl;
+    ::w_counter += duration.count();
+
+    //cout << "--Time taken by function: "
+    //     << duration.count() << " microseconds" << endl;
 
     pthread_exit(NULL);
 }
@@ -90,9 +94,9 @@ void *WriteHelper(void *threadarg) {
 void *WriteRandomHelper(void *threadarg) {
     struct thread_data *my_data;
     my_data = (struct thread_data *) threadarg;
-    cout << "id : " << my_data->id;
-    cout << "Record : " << my_data->rec ;
-    cout << "fileSize : "<< my_data->fileSize;
+    //cout << "id : " << my_data->id;
+    //cout << "Record : " << my_data->rec ;
+    //cout << "fileSize : "<< my_data->fileSize;
    
     long long int rand_num = 0;
     int threadid = my_data->id;
@@ -140,9 +144,11 @@ void *WriteRandomHelper(void *threadarg) {
     free(buf1);
     
     auto duration = duration_cast<microseconds>(stop - start);
+    
+    ::w_counter += duration.count();
 
-    cout << "--Time taken by function: "
-         << duration.count() << " microseconds" << endl;
+    //cout << "--Time taken by function: "
+    //     << duration.count() << " microseconds" << endl;
 
     pthread_exit(NULL);
 }
@@ -151,9 +157,9 @@ void *WriteRandomHelper(void *threadarg) {
 void *ReadHelper(void *threadarg) {
   struct thread_data *my_data;
     my_data = (struct thread_data *) threadarg;
-    cout << "id : " << my_data->id;
-    cout << "Record : " << my_data->rec ;
-    cout << "fileSize : "<< my_data->fileSize;
+    //cout << "id : " << my_data->id;
+    //cout << "Record : " << my_data->rec ;
+    //cout << "fileSize : "<< my_data->fileSize;
 
     int threadid = my_data->id;
     long long int size = my_data->fileSize;
@@ -184,18 +190,20 @@ void *ReadHelper(void *threadarg) {
     free(buffer);
     
     auto duration = duration_cast<microseconds>(stop - start);
-
-    cout << "--Time taken by function: "
-         << duration.count() << " microseconds" << endl;
+    
+    ::r_counter += duration.count();
+    
+    //cout << "--Time taken by function: "
+    //    << duration.count() << " microseconds" << endl;
 }
 
 
 void *ReadRandomHelper(void *threadarg) {
   struct thread_data *my_data;
     my_data = (struct thread_data *) threadarg;
-    cout << "id : " << my_data->id;
-    cout << "Record : " << my_data->rec ;
-    cout << "fileSize : "<< my_data->fileSize;
+    //cout << "id : " << my_data->id;
+    //cout << "Record : " << my_data->rec ;
+    //cout << "fileSize : "<< my_data->fileSize;
 
     long long int rand_num = 0; 
     int threadid = my_data->id;
@@ -232,8 +240,10 @@ void *ReadRandomHelper(void *threadarg) {
     
     auto duration = duration_cast<microseconds>(stop - start);
 
-    cout << "--Time taken by function: "
-         << duration.count() << " microseconds" << endl;
+    ::r_counter += duration.count();
+    
+    //cout << "--Time taken by function: "
+    //     << duration.count() << " microseconds" << endl;
 }
 
 
@@ -245,7 +255,7 @@ int main(int argc, char *argv[])
     if (strcmp(accessPattern, "W") == 0)
     {
         cout<<"Write Method Call"<<"\n";
-        write(atoi(argv[2]),atoi(argv[3]));    
+        write(atoi(argv[2]),atoi(argv[3]));
     }
     else if (strcmp(accessPattern, "R") == 0)
     {
@@ -273,7 +283,7 @@ void write(int files, int record)
    long long fileSize = tenGb/files;   
     
    pthread_t threads[files];
-    
+   cout << endl << "Start Time :" << ::w_counter; 
    struct thread_data td[files];
    int rc;
    int i;   
@@ -287,6 +297,12 @@ void write(int files, int record)
          exit(-1);
       }
    }
+
+   for (int i = 0; i < files; i++)
+       pthread_join(threads[i], NULL);
+
+   cout << endl << "Write Speed is :" << tenGb/::w_counter << "MB/Sec"<<endl;
+   
    pthread_exit(NULL);
 }
 
@@ -311,13 +327,19 @@ void write_random(int files, int record)
          exit(-1);
       }
    }
+
+   for (int i = 0; i < files; i++)
+       pthread_join(threads[i], NULL);
+
+   cout << endl << "Write Speed is :" << tenGb/::w_counter << "MB/Sec"<<endl;
+
    pthread_exit(NULL);
 }
 
 void read(int files, int record)
 {
    //put this value below prior too submission : 10485760000    
-   long long int tenGb = 1048576000;
+   long long int tenGb = 10485760000;
    long long int fileSize = tenGb/files;
 
    pthread_t threads[files];
@@ -335,13 +357,19 @@ void read(int files, int record)
          exit(-1);
       }
    }
+
+   for (int i = 0; i < files; i++)
+       pthread_join(threads[i], NULL);
+
+   cout << endl << "Read Speed is :" << tenGb/::r_counter << "MB/Sec"<<endl;
+   
    pthread_exit(NULL);
 }
 
 void read_random(int files, int record)
 {
    //put this value below prior too submission : 10485760000    
-   long long int tenGb = 1048576000;
+   long long int tenGb = 10485760000;
    long long int fileSize = tenGb/files;
 
    pthread_t threads[files];
@@ -359,15 +387,11 @@ void read_random(int files, int record)
          exit(-1);
       }
    }
+
+   for (int i = 0; i < files; i++)
+       pthread_join(threads[i], NULL);
+
+   cout << endl << "Read Speed is :" << tenGb/::r_counter << "MB/Sec"<<endl;
+
    pthread_exit(NULL);
 }
-
-
-
-
-
-
-
-
-
-
