@@ -122,13 +122,13 @@ void *WriteRandomHelper(void *threadarg) {
 
     long long int hops=size/recordSize; //10GB/1M for 1 thread
 
-    int fileDescriptor = open(cstr2, O_CREAT|O_TRUNC|O_DIRECT|O_WRONLY, S_IRWXU);
+    int fileDescriptor = open(cstr2, O_CREAT|O_TRUNC|O_DSYNC|O_WRONLY, S_IRWXU);
     
     auto start = high_resolution_clock::now();
 
     for(int i = 0; i < hops ;i++){
       
-      rand_num = (rand()%(size));
+      rand_num = (rand()%(size-recordSize));
       lseek(fileDescriptor, rand_num, SEEK_SET);
       write(fileDescriptor, buffer, recordSize);
     }
@@ -220,7 +220,7 @@ void *ReadRandomHelper(void *threadarg) {
  
 
     for(int i = 0; i < hops ;i++){
-      rand_num = rand()%(size);
+      rand_num = rand()%(size-recordSize);
       lseek(fileDescriptor, rand_num, recordSize);
       read(fileDescriptor, buffer, recordSize);
     }
@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
 void write(int files, int record) 
 {   
    //put this value below prior too submission : 10485760000	
-   long long tenGb = 1048576000;   
+   long long tenGb = 10485760000;   
    long long fileSize = tenGb/files;   
     
    pthread_t threads[files];
@@ -293,7 +293,7 @@ void write(int files, int record)
 void write_random(int files, int record) 
 {   
    //put this value below prior too submission : 10485760000	
-   long long tenGb = 1048576000;   
+   long long tenGb = 10485760000;   
    long long fileSize = tenGb/files;   
     
    pthread_t threads[files];
