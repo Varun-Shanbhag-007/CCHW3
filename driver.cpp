@@ -263,7 +263,7 @@ void write(int files, int record)
    
    auto duration = duration_cast<seconds>(stop - start);
 
-   cout << endl << "Write Speed is :"  << (tenGb/duration.count())/1048576 << "Mb/Sec"<<endl;
+   cout << endl << "Write Speed is :"  << (float) (tenGb/duration.count())/1048576 << "Mb/Sec"<<endl;
    
    pthread_exit(NULL);
 }
@@ -298,7 +298,7 @@ void write_random(int files, int record)
 
    auto duration = duration_cast<seconds>(stop - start);
 
-   cout << endl << "Write Random Speed is :"  << (tenGb/duration.count())/1048576 << "Mb/Sec"<<endl;
+   cout << endl << "Write Random Speed is :"  << (float)(tenGb/duration.count())/1048576 << "Mb/Sec"<<endl;
 
    pthread_exit(NULL);
 }
@@ -333,7 +333,7 @@ void read(int files, int record)
    
    auto duration = duration_cast<seconds>(stop - start);
    
-   cout << endl << "Read Speed is :"  << (tenGb/duration.count())/1048576 << "Mb/Sec"<<endl;
+   cout << endl << "Read Speed is :"  << (float)(tenGb/duration.count())/1048576 << "Mb/Sec"<<endl;
 	 
    pthread_exit(NULL);
 }
@@ -369,7 +369,7 @@ void read_random(int files, int record)
    
    auto duration = duration_cast<seconds>(stop - start);
 
-   cout << endl << "Read Random Speed is :" << (tenGb/duration.count())/1048576 << "Mb/Sec"<<endl;
+   cout << endl << "Read Random Speed is :" <<  (float)(tenGb/duration.count())/1048576 << "Mb/Sec"<<endl;
 
    pthread_exit(NULL);
 }
