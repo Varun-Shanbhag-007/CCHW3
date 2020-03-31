@@ -1,3 +1,16 @@
+/*
+@author: Varun Shanbhag (https://github.com/Varun-Shanbhag-007/),
+         Tushar Nitave (https://github.com/tushar-nitave),
+         Talwinder Singh ()
+
+Date: March 31 2020
+
+Course: Cloud Computing CS553 Spring 20
+
+Task: Performing MyDiskBench benchmark of the storage systems using C++.
+*/
+
+
 #include<stdio.h>
 #include<iostream>
 #include <chrono>
@@ -15,6 +28,7 @@
 using namespace std;
 using namespace std::chrono;
 
+// Utiliy Method Declaration
 void write(int files, int record);
 
 void read(int files, int record);
@@ -23,56 +37,62 @@ void write_random(int files, int record);
 
 void read_random(int files, int record);
 
-
+//This is thread struct
 struct thread_data {
-   int id;
-   long long int rec;
-   long long int fileSize;
+    int id;
+    long long int rec;
+    long long int fileSize;
 };
 
-
+//Write Sequential Method Helper run by every spawned thread
 void *WriteHelper(void *threadarg) {
     struct thread_data *my_data;
     my_data = (struct thread_data *) threadarg;
-    //cout << "id : " << my_data->id;
-    //cout << "Record : " << my_data->rec ;
-    //cout << "fileSize : "<< my_data->fileSize;
-   
+
+    //Values fetched from thread struct
     int threadid = my_data->id;
     long long int size = my_data->fileSize;
     long long int recordSize = my_data->rec;
-    
+
     stringstream temp_str;
     temp_str<<(threadid);
     string str = temp_str.str();
     const char* cstr2 = str.c_str();
-  
+
     char *buf1 = (char *)malloc(recordSize*sizeof(char));
     void *buffer;
 
     long long int i =0;
-
+    //create a record with given record size
     for(i =0;i<recordSize;i++){
 
-            buf1[i] = 'a';
+        buf1[i] = 'a';
     }
 
     buf1[i] = '\0';
 
+    //Assign memory analogs to record size which is in multiples of 512
     posix_memalign(&buffer,recordSize,recordSize);
 
     memcpy(buffer, buf1,recordSize*sizeof(char));
 
     long long int hops=size/recordSize; //10GB/1M for 1 thread
 
+    /*
+     * O_CREAT  -- Creates new file if the file does not exists
+     * O_TRUNC  -- Truncates the pre-existing file
+     * O_DIRECT -- Minimises the cache effect of IO
+     * O_WRONLY -- Open the file in write-only mode
+     * S_IRWXU  -- File permissions of the created file
+     */
     int fileDescriptor = open(cstr2, O_CREAT|O_TRUNC|O_DIRECT|O_WRONLY, S_IRWXU);
-    
 
+    // Writing file sequentially
     for(int i = 0; i < hops ;i++){
-       write(fileDescriptor, buffer, recordSize);
+        write(fileDescriptor, buffer, recordSize);
     }
 
-    
+    //Close the file and corresponding buffers
     close(fileDescriptor);
     free(buffer);
     free(buf1);
@@ -83,49 +103,60 @@ void *WriteHelper(void *threadarg) {
 void *WriteRandomHelper(void *threadarg) {
     struct thread_data *my_data;
     my_data = (struct thread_data *) threadarg;
-    //cout << "id : " << my_data->id;
-    //cout << "Record : " << my_data->rec ;
-    //cout << "fileSize : "<< my_data->fileSize;
-   
+
+    //Values fetched from thread struct
     long long int rand_num = 0;
     int threadid = my_data->id;
     long long int size = my_data->fileSize;
     long long int recordSize = my_data->rec;
-    
+
     stringstream temp_str;
     temp_str<<(threadid);
     string str = temp_str.str();
     const char* cstr2 = str.c_str();
-  
+
     char *buf1 = (char *)malloc(recordSize*sizeof(char));
     void *buffer;
 
     long long int i =0;
 
+    //create a record with given record size
     for(i =0;i<recordSize;i++){
 
-            buf1[i] = 'a';
+        buf1[i] = 'a';
     }
 
     buf1[i] = '\0';
 
+    //Assign memory analogs to record size which is in multiples of 512
     posix_memalign(&buffer, recordSize, recordSize);
 
     memcpy(buffer, buf1,recordSize*sizeof(char));
 
     long long int hops=size/recordSize; //10GB/1M for 1 thread
 
+    /*
+     * O_CREAT  -- Creates new file if the file does not exists
+     * O_TRUNC  -- Truncates the pre-existing file
+     * O_DIRECT -- Minimises the cache effect of IO
+     * O_WRONLY -- Open the file in write-only mode
+     * S_IRWXU  -- File permissions of the created file
+     */
     int fileDescriptor = open(cstr2, O_CREAT|O_TRUNC|O_DIRECT|O_WRONLY, S_IRWXU);
-	
+
     long long int true_random = 0;
 
     for(int i = 0; i < hops ;i++){
-      rand_num = (rand()%(size-recordSize));
-      true_random = (rand_num/recordSize) * recordSize;
-      lseek(fileDescriptor, true_random, SEEK_SET);
-      write(fileDescriptor, buffer, recordSize);
+        rand_num = (rand()%(size-recordSize));
+        //we do this step to ensure that generated random number is multiple of record size
+        // as O_DIRECT requires strict memory alignment and this is how we ensure it's achieved
+        true_random = (rand_num/recordSize) * recordSize;
+        //lseek is  used to randomly seek and reposition the file descriptor to random location in file
+        lseek(fileDescriptor, true_random, SEEK_SET);
+        write(fileDescriptor, buffer, recordSize);
     }
 
+    //Close the file and corresponding buffers
     close(fileDescriptor);
     free(buffer);
     free(buf1);
@@ -135,12 +166,10 @@ void *WriteRandomHelper(void *threadarg) {
 
 
 void *ReadHelper(void *threadarg) {
-  struct thread_data *my_data;
+    struct thread_data *my_data;
     my_data = (struct thread_data *) threadarg;
-    //cout << "id : " << my_data->id;
-    //cout << "Record : " << my_data->rec ;
-    //cout << "fileSize : "<< my_data->fileSize;
 
+    //Values fetched from thread struct
     int threadid = my_data->id;
     long long int size = my_data->fileSize;
     long long int recordSize = my_data->rec;
@@ -152,32 +181,37 @@ void *ReadHelper(void *threadarg) {
 
     void *buffer;
 
+    //Assign memory analogs to record size which is in multiples of 512
     posix_memalign(&buffer,recordSize,recordSize);
 
     long long int hops=size/recordSize; //10GB/1M for 1 thread
 
+    /*
+    * O_DIRECT -- Minimises the cache effect of IO
+    * O_RDONLY -- Open the file in read-only mode
+    * S_IRWXU  -- File permissions of the created file
+    */
     int fileDescriptor = open(cstr2,O_DIRECT|O_RDONLY, S_IRWXU);
 
-
+    //read file in chunks of record size sequentially.
     for(int i = 0; i < hops ;i++){
-       read(fileDescriptor, buffer, recordSize);
+        read(fileDescriptor, buffer, recordSize);
     }
 
-
+    //Close the file and corresponding buffers
     close(fileDescriptor);
     free(buffer);
-    
+
+    pthread_exit(NULL);
 }
 
 
 void *ReadRandomHelper(void *threadarg) {
-  struct thread_data *my_data;
+    struct thread_data *my_data;
     my_data = (struct thread_data *) threadarg;
-    //cout << "id : " << my_data->id;
-    //cout << "Record : " << my_data->rec ;
-    //cout << "fileSize : "<< my_data->fileSize;
 
-    long long int rand_num = 0; 
+    //Values fetched from thread struct
+    long long int rand_num = 0;
     int threadid = my_data->id;
     long long int size = my_data->fileSize;
     long long int recordSize = my_data->rec;
@@ -189,21 +223,30 @@ void *ReadRandomHelper(void *threadarg) {
 
     void *buffer;
 
+    //Assign memory analogs to record size which is in multiples of 512
     posix_memalign(&buffer,recordSize,recordSize);
 
     long long int hops=size/recordSize; //10GB/1M for 1 thread
 
+    /*
+   * O_DIRECT -- Minimises the cache effect of IO
+   * O_RDONLY -- Open the file in read-only mode
+   * S_IRWXU  -- File permissions of the created file
+   */
     int fileDescriptor = open(cstr2,O_DIRECT|O_RDONLY, S_IRWXU);
 
+    //read file in chunks of record size randomly.
     for(int i = 0; i < hops ;i++){
-      rand_num = rand()%(size-recordSize);
-      lseek(fileDescriptor, rand_num, recordSize);
-      read(fileDescriptor, buffer, recordSize);
+        rand_num = rand()%(size-recordSize);
+        //lseek is  used to randomly seek and reposition the file descriptor to random location in file
+        lseek(fileDescriptor, rand_num, recordSize);
+        read(fileDescriptor, buffer, recordSize);
     }
 
+    //Close the file and corresponding buffers
     close(fileDescriptor);
     free(buffer);
-    
+
 }
 
 
@@ -214,12 +257,12 @@ int main(int argc, char *argv[])
     char *accessPattern = argv[1];
     if (strcmp(accessPattern, "W") == 0)
     {
-        cout<<"Write Method Call"<<"\n";
+        cout<<"Write Sequential Method Call"<<"\n";
         write(atoi(argv[2]),atoi(argv[3]));
     }
     else if (strcmp(accessPattern, "R") == 0)
     {
-        cout<<"Read Method Call"<<"\n";
+        cout<<"Read Sequential Method Call"<<"\n";
         read(atoi(argv[2]),atoi(argv[3]));
     }
    else if (strcmp(accessPattern, "WR") == 0)
@@ -237,15 +280,16 @@ int main(int argc, char *argv[])
 }
 
 void write(int files, int record) 
-{   
-   //put this value below prior too submission : 10485760000	
+{
+   //put this value below prior too submission : 10485760000
    long long tenGb = 10485760000;   
-   long long fileSize = tenGb/files;   
-    
+   long long fileSize = tenGb/files;
+
+   //spawn threads and execute helper method to do the benchmarking
    pthread_t threads[files];
    struct thread_data td[files];
    int rc;
-   int i;   
+   int i;
    for( i = 0; i < files; i++ ) {
       td[i].id = i;
       td[i].rec = record;
@@ -257,27 +301,34 @@ void write(int files, int record)
       }
    }
    auto start = high_resolution_clock::now();
-
+   //wait for all threads to complete
    for (int i = 0; i < files; i++)
        pthread_join(threads[i], NULL);
 
    auto stop = high_resolution_clock::now();
-   
+
+   //capture the duration of code-runtime
    auto duration = duration_cast<microseconds>(stop - start);
 
-   cout << endl << "Write Speed is :"  << (float) tenGb/(float)duration.count() << "Mb/Sec"<<endl;
+   double speed = (float) tenGb/(float)duration.count();
+
+   double IOPS =  (speed/(record/1024))*1024;
+
+   cout << endl << "Write Speed is : "  << speed << "Mb/Sec"<<endl;
+
+   cout<< "IOPS : " << IOPS<<" ops/sec"<<endl;
    
    pthread_exit(NULL);
 }
 
 void write_random(int files, int record) 
 {   
-   //put this value below prior too submission : 10485760000	
-   long long int tenGb = 1024*1024*1024;   
-   long long fileSize = tenGb/files;   
-    
+
+   long long int tenGb = 10485760000;
+   long long fileSize = tenGb/files;
+
+    //spawn threads and execute helper method to do the benchmarking
    pthread_t threads[files];
-    
    struct thread_data td[files];
    int rc;
    int i;   
@@ -292,17 +343,23 @@ void write_random(int files, int record)
       }
    }
    auto start = high_resolution_clock::now();
-
+   //wait for all threads to complete
    for (int i = 0; i < files; i++)
        pthread_join(threads[i], NULL);
    
    auto stop = high_resolution_clock::now();
-
+   //capture the duration of code-runtime
    auto duration = duration_cast<microseconds>(stop - start);
-   
-   cout << endl << "Write Random Speed is :"  << (float) tenGb/(float)duration.count() << "Mb/Sec"<<endl;
 
-   pthread_exit(NULL);
+    double speed = (float) tenGb/(float)duration.count();
+
+    double IOPS =  (speed/(record/1024))*1024;
+
+    cout << endl << "Write Random Speed is : " <<speed<<"Mb/Sec"<<endl;
+
+    cout<< "IOPS : "<<IOPS<<" ops/sec"<<endl;
+
+    pthread_exit(NULL);
 }
 
 void read(int files, int record)
@@ -312,7 +369,7 @@ void read(int files, int record)
    long long int fileSize = tenGb/files;
 
    pthread_t threads[files];
-
+    //spawn threads and execute helper method to do the benchmarking
    struct thread_data td[files];
    int rc;
    int i;
@@ -328,16 +385,24 @@ void read(int files, int record)
    }
    auto start = high_resolution_clock::now();
 
+    //wait for all threads to complete
    for (int i = 0; i < files; i++)
        pthread_join(threads[i], NULL);
    
    auto stop = high_resolution_clock::now();
-   
+    //capture the duration of code-runtime
    auto duration = duration_cast<microseconds>(stop - start);
+
+    double speed = (float) tenGb/(float)duration.count();
+
+    double IOPS =  (speed/(record/1024))*1024;
    
-   cout << endl << "Read Speed is :"  << (float)tenGb/(float)duration.count() << "Mb/Sec"<<endl;
-	 
-   pthread_exit(NULL);
+    cout << endl << "Read Speed is : "  << speed << "Mb/Sec"<<endl;
+
+    cout<< "IOPS : "<<IOPS<<" ops/sec"<<endl;
+
+
+    pthread_exit(NULL);
 }
 
 void read_random(int files, int record)
@@ -347,7 +412,7 @@ void read_random(int files, int record)
    long long int fileSize = tenGb/files;
 
    pthread_t threads[files];
-
+    //spawn threads and execute helper method to do the benchmarking
    struct thread_data td[files];
    int rc;
    int i;
@@ -364,14 +429,21 @@ void read_random(int files, int record)
 
    auto start = high_resolution_clock::now();
 
+    //wait for all threads to complete
    for (int i = 0; i < files; i++)
        pthread_join(threads[i], NULL);
 
    auto stop = high_resolution_clock::now();
-   
+    //capture the duration of code-runtime
    auto duration = duration_cast<microseconds>(stop - start);
 
-   cout << endl << "Read Random Speed is :" <<  (float)tenGb/(float)duration.count()<< "Mb/Sec"<<endl;
+    double speed = (float) tenGb/(float)duration.count();
 
-   pthread_exit(NULL);
+    double IOPS =  (speed/(record/1024))*1024;
+
+    cout << endl << "Read Random Speed is : " <<speed<< "Mb/Sec"<<endl;
+    cout<< "IOPS : "<<IOPS<<" ops/sec"<<endl;
+
+
+    pthread_exit(NULL);
 }
