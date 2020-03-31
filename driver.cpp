@@ -115,12 +115,14 @@ void *WriteRandomHelper(void *threadarg) {
 
     long long int hops=size/recordSize; //10GB/1M for 1 thread
 
-    int fileDescriptor = open(cstr2, O_DIRECT|O_WRONLY, S_IRWXU);
-    
+    int fileDescriptor = open(cstr2, O_CREAT|O_TRUNC|O_DIRECT|O_WRONLY, S_IRWXU);
+	
+    long long int true_random = 0;
+
     for(int i = 0; i < hops ;i++){
-      
       rand_num = (rand()%(size-recordSize));
-      lseek(fileDescriptor, rand_num, SEEK_SET);
+      true_random = (rand_num/recordSize) * recordSize;
+      lseek(fileDescriptor, true_random, SEEK_SET);
       write(fileDescriptor, buffer, recordSize);
     }
 
