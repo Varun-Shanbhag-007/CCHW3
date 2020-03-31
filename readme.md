@@ -20,7 +20,7 @@
 ##### pthread library
 
 ### Steps to Run
-###############################################################
+--
 #### execute command 
 `make`  
 ##### This will clean and compile the cpp code
@@ -30,7 +30,7 @@
 `./benchmark <W/WR/R/RR> <# of Threads> <RecordSize in bytes>`
 
 ### Executing the code:
-###############################################################
+--
 #### 1. Write sequential with 2 threads and record size of 4KB
 `./benchmark W 2 4096`
 
@@ -45,6 +45,7 @@
 
 
 ### Note:
+--
 1. Benchmark program will read/write 10g of data on to disk.
 2. Before performing any READ operations you must first execute WRITE Sequential operation of similar configuration.
 3. Record size should be multiple of 512 otherwise there will be Segmentation Fault because default block size is 512 bytes.
