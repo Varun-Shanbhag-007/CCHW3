@@ -109,7 +109,7 @@ void *WriteRandomHelper(void *threadarg) {
 
     buf1[i] = '\0';
 
-    posix_memalign(&buffer,size, size);
+    posix_memalign(&buffer, recordSize, recordSize);
 
     memcpy(buffer, buf1,recordSize*sizeof(char));
 
