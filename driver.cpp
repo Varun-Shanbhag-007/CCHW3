@@ -109,13 +109,13 @@ void *WriteRandomHelper(void *threadarg) {
 
     buf1[i] = '\0';
 
-    posix_memalign(&buffer,recordSize,recordSize);
+    posix_memalign(&buffer,size, size);
 
     memcpy(buffer, buf1,recordSize*sizeof(char));
 
     long long int hops=size/recordSize; //10GB/1M for 1 thread
 
-    int fileDescriptor = open(cstr2, O_CREAT|O_TRUNC|O_DSYNC|O_WRONLY, S_IRWXU);
+    int fileDescriptor = open(cstr2, O_DIRECT|O_WRONLY, S_IRWXU);
     
     for(int i = 0; i < hops ;i++){
       
@@ -261,9 +261,9 @@ void write(int files, int record)
 
    auto stop = high_resolution_clock::now();
    
-   auto duration = duration_cast<seconds>(stop - start);
+   auto duration = duration_cast<microseconds>(stop - start);
 
-   cout << endl << "Write Speed is :"  << (float) (tenGb/duration.count())/1048576 << "Mb/Sec"<<endl;
+   cout << endl << "Write Speed is :"  << (float) tenGb/(float)duration.count() << "Mb/Sec"<<endl;
    
    pthread_exit(NULL);
 }
@@ -271,7 +271,7 @@ void write(int files, int record)
 void write_random(int files, int record) 
 {   
    //put this value below prior too submission : 10485760000	
-   long long tenGb = 10485760000;   
+   long long int tenGb = 1024*1024*1024;   
    long long fileSize = tenGb/files;   
     
    pthread_t threads[files];
@@ -296,9 +296,9 @@ void write_random(int files, int record)
    
    auto stop = high_resolution_clock::now();
 
-   auto duration = duration_cast<seconds>(stop - start);
-
-   cout << endl << "Write Random Speed is :"  << (float)(tenGb/duration.count())/1048576 << "Mb/Sec"<<endl;
+   auto duration = duration_cast<microseconds>(stop - start);
+   
+   cout << endl << "Write Random Speed is :"  << (float) tenGb/(float)duration.count() << "Mb/Sec"<<endl;
 
    pthread_exit(NULL);
 }
@@ -331,9 +331,9 @@ void read(int files, int record)
    
    auto stop = high_resolution_clock::now();
    
-   auto duration = duration_cast<seconds>(stop - start);
+   auto duration = duration_cast<microseconds>(stop - start);
    
-   cout << endl << "Read Speed is :"  << (float)(tenGb/duration.count())/1048576 << "Mb/Sec"<<endl;
+   cout << endl << "Read Speed is :"  << (float)tenGb/(float)duration.count() << "Mb/Sec"<<endl;
 	 
    pthread_exit(NULL);
 }
@@ -367,9 +367,9 @@ void read_random(int files, int record)
 
    auto stop = high_resolution_clock::now();
    
-   auto duration = duration_cast<seconds>(stop - start);
+   auto duration = duration_cast<microseconds>(stop - start);
 
-   cout << endl << "Read Random Speed is :" <<  (float)(tenGb/duration.count())/1048576 << "Mb/Sec"<<endl;
+   cout << endl << "Read Random Speed is :" <<  (float)tenGb/(float)duration.count()<< "Mb/Sec"<<endl;
 
    pthread_exit(NULL);
 }
