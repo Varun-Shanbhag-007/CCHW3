@@ -249,11 +249,8 @@ void *ReadRandomHelper(void *threadarg) {
 
 }
 
+int main(int argc, char *argv[]){
 
-
-
-int main(int argc, char *argv[])
-{
     char *accessPattern = argv[1];
     if (strcmp(accessPattern, "W") == 0)
     {
@@ -279,77 +276,111 @@ int main(int argc, char *argv[])
      return(0);
 }
 
-void write(int files, int record) 
-{
-   //put this value below prior too submission : 10485760000
-   long long tenGb = 10485760000;   
-   long long fileSize = tenGb/files;
+void write(int files, int record) {
+    /*
+        This is a utility write sequential method.
+        Number of files is calculated by totalsize/record_size
+        Spwans N threads where N is number of files.
+        Every spwaned thread calls WriteHelper method for sequential write operation.
 
-   //spawn threads and execute helper method to do the benchmarking
-   pthread_t threads[files];
-   struct thread_data td[files];
-   int rc;
-   int i;
-   for( i = 0; i < files; i++ ) {
-      td[i].id = i;
-      td[i].rec = record;
-      td[i].fileSize = fileSize;
-      rc = pthread_create(&threads[i], NULL, WriteHelper, (void *)&td[i]);      
-      if (rc) {
-         cout << "Error:unable to create thread," << rc << endl;
-         exit(-1);
-      }
-   }
-   auto start = high_resolution_clock::now();
-   //wait for all threads to complete
-   for (int i = 0; i < files; i++)
-       pthread_join(threads[i], NULL);
+        @parameters:
+            - Number of files
+            - Record Size
 
-   auto stop = high_resolution_clock::now();
+        @ouput:
+            - Throughput MB/sec
+            - IOPS OPS/sec
+    
+    */
+ 
+    long long tenGb = 10485760000;   
+    long long fileSize = tenGb/files;
 
-   //capture the duration of code-runtime
-   auto duration = duration_cast<microseconds>(stop - start);
-
-   double speed = (float) tenGb/(float)duration.count();
-
-   double IOPS =  (speed/(record/1024))*1024;
-
-   cout << endl << "Write Speed is : "  << speed << "MB/sec"<<endl;
-
-   cout<< "IOPS : " << IOPS<<" OPS/sec"<<endl;
-   
-   pthread_exit(NULL);
-}
-
-void write_random(int files, int record) 
-{   
-
-   long long int tenGb = 10485760000;
-   long long fileSize = tenGb/files;
+    pthread_t threads[files];
+    struct thread_data td[files];
+    int rc;
+    int i;
 
     //spawn threads and execute helper method to do the benchmarking
-   pthread_t threads[files];
-   struct thread_data td[files];
-   int rc;
-   int i;   
-   for( i = 0; i < files; i++ ) {
-      td[i].id = i;
-      td[i].rec = record;
-      td[i].fileSize = fileSize;
-      rc = pthread_create(&threads[i], NULL, WriteRandomHelper, (void *)&td[i]);      
-      if (rc) {
-         cout << "Error:unable to create thread," << rc << endl;
-         exit(-1);
-      }
-   }
-   auto start = high_resolution_clock::now();
-   //wait for all threads to complete
-   for (int i = 0; i < files; i++)
+    for( i = 0; i < files; i++ ) {
+        td[i].id = i;
+        td[i].rec = record;
+        td[i].fileSize = fileSize;
+        rc = pthread_create(&threads[i], NULL, WriteHelper, (void *)&td[i]);      
+        if (rc) {
+            cout << "Error:unable to create thread," << rc << endl;
+            exit(-1);
+        }
+    }
+
+    auto start = high_resolution_clock::now();
+
+    //wait for all threads to complete
+    for (int i = 0; i < files; i++)
+        pthread_join(threads[i], NULL);
+
+    auto stop = high_resolution_clock::now();
+
+    //capture the duration of code-runtime
+    auto duration = duration_cast<microseconds>(stop - start);
+
+    double speed = (float) tenGb/(float)duration.count();
+
+    double IOPS =  (speed/(record/1024))*1024;
+
+    cout << endl << "Write Speed is : "  << speed << "MB/sec"<<endl;
+
+    cout<< "IOPS : " << IOPS<<" OPS/sec"<<endl;
+
+    pthread_exit(NULL);
+}
+
+void write_random(int files, int record) {   
+     /*
+        This is a utility write random method.
+        Number of files is calculated by totalsize/record_size
+        Spwans N threads where N is number of files.
+        Every spwaned thread calls WriteRandomHelper method for random write operation.
+
+        @parameters:
+            - Number of files
+            - Record Size
+
+        @output:
+            - Throughput MB/sec
+            - IOPS OPS/sec
+    
+    */
+ 
+
+    long long int tenGb = 10485760000;
+    long long fileSize = tenGb/files;
+
+    pthread_t threads[files];
+    struct thread_data td[files];
+    int rc;
+    int i;   
+
+    //spawn threads and execute helper method to do the benchmarking
+    for( i = 0; i < files; i++ ) {
+        td[i].id = i;
+        td[i].rec = record;
+        td[i].fileSize = fileSize;
+        rc = pthread_create(&threads[i], NULL, WriteRandomHelper, (void *)&td[i]);      
+        if (rc) {
+            cout << "Error:unable to create thread," << rc << endl;
+            exit(-1);
+        }
+    }
+
+    auto start = high_resolution_clock::now();
+    //wait for all threads to complete
+    for (int i = 0; i < files; i++)
        pthread_join(threads[i], NULL);
    
-   auto stop = high_resolution_clock::now();
-   //capture the duration of code-runtime
-   auto duration = duration_cast<microseconds>(stop - start);
+    auto stop = high_resolution_clock::now();
+    //capture the duration of code-runtime
+    auto duration = duration_cast<microseconds>(stop - start);
 
     double speed = (float) tenGb/(float)duration.count();
 
@@ -362,41 +393,58 @@ void write_random(int files, int record)
     pthread_exit(NULL);
 }
 
-void read(int files, int record)
-{
-   //put this value below prior too submission : 10485760000    
-   long long int tenGb = 10485760000;
-   long long int fileSize = tenGb/files;
+void read(int files, int record){  
+     /*
+        This is a read  sequential method.
+        Number of files is calculated by totalsize/record_size
+        Spwans N threads where N is number of files.
+        Every spwaned thread calls ReadHelper method for sequential write operation.
 
-   pthread_t threads[files];
+        @parameters:
+            - Number of files
+            - Record Size
+
+        @ouput:
+            - Throughput MB/sec
+            - IOPS OPS/sec
+    
+    */
+ 
+
+    long long int tenGb = 10485760000;
+    long long int fileSize = tenGb/files;
+
+    pthread_t threads[files];
+
+    struct thread_data td[files];
+    int rc;
+    int i;
+
     //spawn threads and execute helper method to do the benchmarking
-   struct thread_data td[files];
-   int rc;
-   int i;
-   for( i = 0; i < files; i++ ) {
-      td[i].id = i;
-      td[i].rec = record;
-      td[i].fileSize = fileSize;
-      rc = pthread_create(&threads[i], NULL, ReadHelper, (void *)&td[i]);
-      if (rc) {
-         cout << "Error:unable to create thread," << rc << endl;
-         exit(-1);
-      }
-   }
-   auto start = high_resolution_clock::now();
+    for( i = 0; i < files; i++ ) {
+        td[i].id = i;
+        td[i].rec = record;
+        td[i].fileSize = fileSize;
+        rc = pthread_create(&threads[i], NULL, ReadHelper, (void *)&td[i]);
+        if (rc) {
+            cout << "Error:unable to create thread," << rc << endl;
+            exit(-1);
+        }
+    }
+    auto start = high_resolution_clock::now();
 
     //wait for all threads to complete
-   for (int i = 0; i < files; i++)
-       pthread_join(threads[i], NULL);
-   
-   auto stop = high_resolution_clock::now();
+    for (int i = 0; i < files; i++)
+        pthread_join(threads[i], NULL);
+
+    auto stop = high_resolution_clock::now();
     //capture the duration of code-runtime
-   auto duration = duration_cast<microseconds>(stop - start);
+    auto duration = duration_cast<microseconds>(stop - start);
 
     double speed = (float) tenGb/(float)duration.count();
 
     double IOPS =  (speed/(record/1024))*1024;
-   
+
     cout << endl << "Read Speed is : "  << speed << "MB/sec"<<endl;
 
     cout<< "IOPS : "<<IOPS<<" OPS/sec"<<endl;
@@ -405,37 +453,52 @@ void read(int files, int record)
     pthread_exit(NULL);
 }
 
-void read_random(int files, int record)
-{
-   //put this value below prior too submission : 10485760000    
-   long long int tenGb = 10485760000;
-   long long int fileSize = tenGb/files;
+void read_random(int files, int record){
+     /*
+        This is a utility read random method.
+        Number of files is calculated by totalsize/record_size
+        Spwans N threads where N is number of files.
+        Every spwaned thread calls ReadRandomHelper method for sequential write operation.
 
-   pthread_t threads[files];
+        @parameters:
+            - Number of files
+            - Record Size
+
+        @output:
+            - Throughput MB/sec
+            - IOPS OPS/sec
+    
+    */
+ 
+
+    long long int tenGb = 10485760000;
+    long long int fileSize = tenGb/files;
+
+    pthread_t threads[files];
     //spawn threads and execute helper method to do the benchmarking
-   struct thread_data td[files];
-   int rc;
-   int i;
-   for( i = 0; i < files; i++ ) {
-      td[i].id = i;
-      td[i].rec = record;
-      td[i].fileSize = fileSize;
-      rc = pthread_create(&threads[i], NULL, ReadRandomHelper, (void *)&td[i]);
-      if (rc) {
-         cout << "Error:unable to create thread," << rc << endl;
-         exit(-1);
-      }
-   }
+    struct thread_data td[files];
+    int rc;
+    int i;
+    for( i = 0; i < files; i++ ) {
+        td[i].id = i;
+        td[i].rec = record;
+        td[i].fileSize = fileSize;
+        rc = pthread_create(&threads[i], NULL, ReadRandomHelper, (void *)&td[i]);
+        if (rc) {
+            cout << "Error:unable to create thread," << rc << endl;
+            exit(-1);
+        }
+    }
 
-   auto start = high_resolution_clock::now();
+    auto start = high_resolution_clock::now();
 
     //wait for all threads to complete
-   for (int i = 0; i < files; i++)
-       pthread_join(threads[i], NULL);
+    for (int i = 0; i < files; i++)
+        pthread_join(threads[i], NULL);
 
-   auto stop = high_resolution_clock::now();
+    auto stop = high_resolution_clock::now();
     //capture the duration of code-runtime
-   auto duration = duration_cast<microseconds>(stop - start);
+    auto duration = duration_cast<microseconds>(stop - start);
 
     double speed = (float) tenGb/(float)duration.count();
 
