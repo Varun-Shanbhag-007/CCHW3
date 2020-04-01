@@ -12,34 +12,34 @@
 # MyDiskBench
 ### This is a benchmarking program to calculate R/W speed of a given drive HDD/SSD. It uses POSIX threads for measuring throughput.
 
-#####  Its pretty simple to use it
+####  Its pretty simple to use it
 
-### Pre-Requisite:
-#### g++ compiler
-#### pthread library
+## Pre-Requisite:
+### g++ compiler
+### pthread library
 
-### Steps to Run
+## Steps to Run
 #### execute command 
 #### `make`  
 ##### This will clean and compile the cpp code
 
-#### To run the program use following options:
+### To run the program use following options:
 
-`./benchmark <W/WR/R/RR> <# of Threads> <RecordSize in bytes>`
+##### `./benchmark <W/WR/R/RR> <# of Threads> <RecordSize in bytes>`
 
 ### Executing the code:
 
 #### 1. Write sequential with 2 threads and record size of 4KB
-####`./benchmark W 2 4096`
+##### `./benchmark W 2 4096`
 
 #### 2. Write random with 48 threads and record size of 16MB
-#### `./benchmark WR 48 16777216`
+##### `./benchmark WR 48 16777216`
 
 #### 3. Read sequential with 2 threads and record size of 4KB
-#### `./benchmark R 2 4096`
+##### `./benchmark R 2 4096`
 
 #### 4. Read random with 48 threads and record size of 16MB
-#### `./benchmark RR 48 16777216`
+##### `./benchmark RR 48 16777216`
 
 
 ### Note:
