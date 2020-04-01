@@ -314,9 +314,9 @@ void write(int files, int record)
 
    double IOPS =  (speed/(record/1024))*1024;
 
-   cout << endl << "Write Speed is : "  << speed << "Mb/Sec"<<endl;
+   cout << endl << "Write Speed is : "  << speed << "MB/sec"<<endl;
 
-   cout<< "IOPS : " << IOPS<<" ops/sec"<<endl;
+   cout<< "IOPS : " << IOPS<<" OPS/sec"<<endl;
    
    pthread_exit(NULL);
 }
@@ -355,9 +355,9 @@ void write_random(int files, int record)
 
     double IOPS =  (speed/(record/1024))*1024;
 
-    cout << endl << "Write Random Speed is : " <<speed<<"Mb/Sec"<<endl;
+    cout << endl << "Write Random Speed is : " <<speed<<"MB/sec"<<endl;
 
-    cout<< "IOPS : "<<IOPS<<" ops/sec"<<endl;
+    cout<< "IOPS : "<<IOPS<<" OPS/sec"<<endl;
 
     pthread_exit(NULL);
 }
@@ -397,9 +397,9 @@ void read(int files, int record)
 
     double IOPS =  (speed/(record/1024))*1024;
    
-    cout << endl << "Read Speed is : "  << speed << "Mb/Sec"<<endl;
+    cout << endl << "Read Speed is : "  << speed << "MB/sec"<<endl;
 
-    cout<< "IOPS : "<<IOPS<<" ops/sec"<<endl;
+    cout<< "IOPS : "<<IOPS<<" OPS/sec"<<endl;
 
 
     pthread_exit(NULL);
@@ -441,8 +441,8 @@ void read_random(int files, int record)
 
     double IOPS =  (speed/(record/1024))*1024;
 
-    cout << endl << "Read Random Speed is : " <<speed<< "Mb/Sec"<<endl;
-    cout<< "IOPS : "<<IOPS<<" ops/sec"<<endl;
+    cout << endl << "Read Random Speed is : " <<speed<< "MB/sec"<<endl;
+    cout<< "IOPS : "<<IOPS<<" OPS/sec"<<endl;
 
 
     pthread_exit(NULL);
